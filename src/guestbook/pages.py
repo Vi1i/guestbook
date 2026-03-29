@@ -177,6 +177,47 @@ async def login_submit(
     )
 
 
+@router.get("/signup", response_class=HTMLResponse)
+async def signup_page(request: Request, db: AsyncSession = Depends(get_db)):
+    user = await _get_user_or_none(request, db)
+    if user is not None:
+        return RedirectResponse(url="/", status_code=303)
+    return templates.TemplateResponse(
+        "signup.html",
+        _template_context(request, None),
+    )
+
+
+@router.post("/signup")
+async def signup_submit(
+    request: Request,
+    email: str = Form(...),
+    db: AsyncSession = Depends(get_db),
+):
+    """Create account (if needed) and send a magic link."""
+    result = await db.execute(select(User).where(User.email == email))
+    user = result.scalar_one_or_none()
+
+    if user is None:
+        user = User(email=email)
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+
+    raw_token = await create_access_token(db, user)
+    verify_url = f"{settings.base_url}/api/v1/auth/verify/{raw_token}"
+    send_magic_link(email, verify_url)
+
+    return templates.TemplateResponse(
+        "link_sent.html",
+        _template_context(
+            request, None,
+            invite_code="",
+            token_expiry_hours=settings.token_expiry_hours,
+        ),
+    )
+
+
 # --- Event pages ---
 
 

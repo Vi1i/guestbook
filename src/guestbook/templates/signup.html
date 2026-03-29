@@ -1,16 +1,16 @@
 {% extends "base.html" %}
 
-{% block title %}Log In — Y'all RSVP{% endblock %}
+{% block title %}Sign Up — Y'all RSVP{% endblock %}
 
 {% block content %}
 <article>
     <header>
-        <h1>Log In</h1>
+        <h1>Sign Up</h1>
     </header>
 
-    <p>Enter your email to receive a login link.</p>
+    <p>Create your account to RSVP to events, manage your preferences, and more.</p>
 
-    <form method="post" action="/login">
+    <form method="post" action="/signup">
         <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
         <label for="email">Email address</label>
         <input type="email" id="email" name="email" placeholder="you@example.com" required>
@@ -18,7 +18,7 @@
     </form>
 
     <footer>
-        <small>Don't have an account? <a href="/signup">Sign up</a></small>
+        <small>Already have an account? <a href="/login">Log in</a></small>
     </footer>
 </article>
 {% endblock %}
