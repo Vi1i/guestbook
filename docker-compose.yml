@@ -1,6 +1,7 @@
 services:
   guestbook:
     build: .
+    container_name: guestbook
     ports:
       - "${GUESTBOOK_PORT:-8000}:${GUESTBOOK_PORT:-8000}"
     env_file:
@@ -27,8 +28,6 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
     volumes:
       - postgres-data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U guestbook"]
