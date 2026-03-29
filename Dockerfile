@@ -6,8 +6,8 @@ WORKDIR /app
 # Copy dependency files first for layer caching
 COPY pyproject.toml uv.lock ./
 
-# Install dependencies (no dev extras)
-RUN uv sync --frozen --no-dev --no-install-project
+# Install dependencies (no dev extras, include postgres driver)
+RUN uv sync --frozen --no-dev --extra postgres --no-install-project
 
 # Copy source and config
 COPY README.md alembic.ini ./
@@ -15,7 +15,7 @@ COPY alembic/ ./alembic/
 COPY src/ ./src/
 
 # Install the project itself
-RUN uv sync --frozen --no-dev
+RUN uv sync --frozen --no-dev --extra postgres
 
 # Create non-root user and data directory
 RUN useradd --create-home --shell /bin/bash guestbook \
