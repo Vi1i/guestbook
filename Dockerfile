@@ -10,7 +10,7 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 
 # Copy source and config
-COPY alembic.ini ./
+COPY README.md alembic.ini ./
 COPY alembic/ ./alembic/
 COPY src/ ./src/
 
