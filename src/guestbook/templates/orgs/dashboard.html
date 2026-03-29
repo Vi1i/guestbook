@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}{{ org.name }} — Guestbook{% endblock %}
+{% block content %}
+<h1>{{ org.name }}</h1>
+
+<div class="grid">
+    <article class="stat-card">
+        <h2>{{ stats.total_events }}</h2>
+        <p>Active Events</p>
+    </article>
+    <article class="stat-card">
+        <h2>{{ stats.headcount }}</h2>
+        <p>Expected Guests</p>
+    </article>
+</div>
+
+<nav>
+    <ul>
+        {% if user_org_role and user_org_role.value >= 2 %}
+        <li><a href="/orgs/{{ org.slug }}/events/new" role="button">Create Event</a></li>
+        {% endif %}
+        {% if user_org_role and user_org_role.value >= 3 %}
+        <li><a href="/orgs/{{ org.slug }}/members" role="button" class="outline">Manage Members</a></li>
+        {% endif %}
+    </ul>
+</nav>
+
+{% if events %}
+<table>
+    <thead>
+        <tr>
+            <th>Event</th>
+            <th>Date</th>
+            <th>Visibility</th>
+            <th>Yes</th>
+            <th>Guests</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for e in events %}
+        <tr>
+            <td>
+                {{ e.title }}
+                {% if e.archived_at %}<span class="badge badge-pending">archived</span>{% endif %}
+            </td>
+            <td>{{ e.date.strftime('%b %d, %Y') }}</td>
+            <td><span class="badge {% if e.visibility.value == 'public' %}badge-attending{% else %}badge-pending{% endif %}">{{ e.visibility.value }}</span></td>
+            <td>{{ e._attending_count }}</td>
+            <td>{{ e._attending_guests }}</td>
+            <td>
+                <a href="/orgs/{{ org.slug }}/events/{{ e.id }}/guests">Guests</a> |
+                <a href="/orgs/{{ org.slug }}/events/{{ e.id }}/edit">Edit</a> |
+                <form method="post" action="/orgs/{{ org.slug }}/events/{{ e.id }}/archive" style="display:inline">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+                    <button type="submit" class="outline secondary" style="margin:0;padding:0.15rem 0.5rem;font-size:0.85rem">
+                        {{ "Unarchive" if e.archived_at else "Archive" }}
+                    </button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No events yet. Create one to get started!</p>
+{% endif %}
+{% endblock %}

@@ -1,8 +1,7 @@
 {% extends "base.html" %}
-
-{% block title %}{{ "Edit" if event else "Create" }} Event — Admin{% endblock %}
-
+{% block title %}{{ "Edit" if event else "Create" }} Event — {{ org.name }}{% endblock %}
 {% block content %}
+<p><a href="/orgs/{{ org.slug }}">&larr; {{ org.name }}</a></p>
 <h1>{{ "Edit" if event else "Create" }} Event</h1>
 
 <form method="post">
@@ -10,7 +9,7 @@
     <label for="title">Title</label>
     <input type="text" id="title" name="title" value="{{ event.title if event else '' }}" required>
 
-    <label for="description">Description <small>(supports Markdown — **bold**, *italic*, [links](url), lists)</small></label>
+    <label for="description">Description <small>(supports Markdown)</small></label>
     <textarea id="description" name="description" rows="6">{{ event.description if event else '' }}</textarea>
 
     <div class="grid">
@@ -32,38 +31,41 @@
     <label for="location_url">Location URL (optional)</label>
     <input type="url" id="location_url" name="location_url" value="{{ event.location_url if event and event.location_url else '' }}">
 
+    <label for="visibility">Visibility</label>
+    <select id="visibility" name="visibility">
+        <option value="private" {% if not event or event.visibility.value == 'private' %}selected{% endif %}>Private — invite code required</option>
+        <option value="public" {% if event and event.visibility.value == 'public' %}selected{% endif %}>Public — listed on landing page</option>
+    </select>
+
     <hr>
     <h3>Event Details</h3>
-    <p><small>Optional fields that appear on the event page.</small></p>
-
     <label for="dress_code">Dress Code</label>
-    <input type="text" id="dress_code" name="dress_code" placeholder="e.g. Casual, Semi-formal, Hawaiian shirts"
+    <input type="text" id="dress_code" name="dress_code"
         value="{{ event.details_json.dress_code if event and event.details_json and event.details_json.dress_code else '' }}">
 
     <label for="parking">Parking Info</label>
-    <input type="text" id="parking" name="parking" placeholder="e.g. Street parking available, use the back lot"
+    <input type="text" id="parking" name="parking"
         value="{{ event.details_json.parking if event and event.details_json and event.details_json.parking else '' }}">
 
     <label for="bring">What to Bring</label>
-    <input type="text" id="bring" name="bring" placeholder="e.g. A side dish, swimsuit, lawn chairs"
+    <input type="text" id="bring" name="bring"
         value="{{ event.details_json.bring if event and event.details_json and event.details_json.bring else '' }}">
 
     <fieldset>
         <legend>Schedule (optional)</legend>
-        <p><small>Add time slots for the event. Leave empty to skip.</small></p>
         <div id="schedule-container">
             {% if event and event.details_json and event.details_json.schedule %}
                 {% for item in event.details_json.schedule %}
                 <div class="schedule-row grid">
-                    <input type="text" name="schedule_time[]" placeholder="Time (e.g. 5:00 PM)" value="{{ item.time }}">
-                    <input type="text" name="schedule_activity[]" placeholder="Activity (e.g. Dinner served)" value="{{ item.activity }}">
+                    <input type="text" name="schedule_time[]" placeholder="Time" value="{{ item.time }}">
+                    <input type="text" name="schedule_activity[]" placeholder="Activity" value="{{ item.activity }}">
                     <button type="button" class="outline secondary remove-schedule-btn">Remove</button>
                 </div>
                 {% endfor %}
             {% else %}
                 <div class="schedule-row grid">
-                    <input type="text" name="schedule_time[]" placeholder="Time (e.g. 5:00 PM)">
-                    <input type="text" name="schedule_activity[]" placeholder="Activity (e.g. Dinner served)">
+                    <input type="text" name="schedule_time[]" placeholder="Time">
+                    <input type="text" name="schedule_activity[]" placeholder="Activity">
                     <button type="button" class="outline secondary remove-schedule-btn">Remove</button>
                 </div>
             {% endif %}
@@ -72,7 +74,6 @@
     </fieldset>
 
     <hr>
-
     <label>
         <input type="checkbox" name="notify_on_change" value="1"
             {{ 'checked' if not event or event.notify_on_change else '' }}>
@@ -89,38 +90,28 @@
     <strong>Invite Code:</strong> <code>{{ event.invite_code }}</code><br>
     <strong>Share Link:</strong> <code>{{ base_url }}/e/{{ event.invite_code }}</code>
 </p>
-
 <div class="grid">
     <div style="text-align:center">
-        <img src="/api/v1/events/{{ event.id }}/qr?size=8" alt="QR Code for {{ event.title }}" style="max-width:250px">
+        <img src="/api/v1/events/{{ event.id }}/qr?size=8" alt="QR Code" style="max-width:250px">
     </div>
     <div>
         <p>Scan this QR code to open the event page.</p>
-        <a href="/api/v1/events/{{ event.id }}/qr?size=15&download=true" role="button" class="outline">Download QR Code (PNG)</a>
+        <a href="/api/v1/events/{{ event.id }}/qr?size=15&download=true" role="button" class="outline">Download QR Code</a>
     </div>
 </div>
 
-{% if user.role.value >= 3 %}
+{% if user_org_role and user_org_role.value >= 2 %}
 <hr>
 <h3>Event Managers</h3>
-<p><small>Assign users as managers for this event. They can edit the event and view the guest list without needing a global manager role.</small></p>
-
 {% if event_managers %}
 <table>
-    <thead>
-        <tr>
-            <th>Email</th>
-            <th>Added</th>
-            <th>Action</th>
-        </tr>
-    </thead>
+    <thead><tr><th>Email</th><th>Action</th></tr></thead>
     <tbody>
         {% for em in event_managers %}
         <tr>
             <td>{{ em.user.email }}</td>
-            <td>{{ em.created_at.strftime('%b %d, %Y') }}</td>
             <td>
-                <form method="post" action="/admin/events/{{ event.id }}/managers/{{ em.id }}/remove" style="display:inline">
+                <form method="post" action="/orgs/{{ org.slug }}/events/{{ event.id }}/managers/{{ em.id }}/remove" style="display:inline">
                     <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
                     <button type="submit" class="outline secondary" style="margin:0;padding:0.15rem 0.5rem;font-size:0.85rem">Remove</button>
                 </form>
@@ -132,8 +123,7 @@
 {% else %}
 <p>No event managers assigned.</p>
 {% endif %}
-
-<form method="post" action="/admin/events/{{ event.id }}/managers/add">
+<form method="post" action="/orgs/{{ org.slug }}/events/{{ event.id }}/managers/add">
     <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
     <div class="grid">
         <input type="email" name="email" placeholder="user@example.com" required>

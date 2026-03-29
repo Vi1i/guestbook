@@ -107,7 +107,7 @@ async def verify(
 
     # Set session
     request.session["user_id"] = str(user.id)
-    request.session["role"] = user.role.value
+    request.session["site_role"] = user.site_role.value
 
     # Redirect: explicit next path > invite code RSVP > home
     if next and next.startswith("/"):

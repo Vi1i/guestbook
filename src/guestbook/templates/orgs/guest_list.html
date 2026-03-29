@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Guest List — {{ event.title }}{% endblock %}
+{% block content %}
+<p><a href="/orgs/{{ org.slug }}">&larr; {{ org.name }}</a></p>
+<h1>Guest List: {{ event.title }}</h1>
+<p>{{ event.date.strftime('%B %d, %Y') }} | Invite code: <code>{{ event.invite_code }}</code></p>
+
+<div class="grid">
+    <article class="stat-card"><h2>{{ stats.attending }}</h2><p>Said Yes</p></article>
+    <article class="stat-card"><h2>{{ stats.total_guests }}</h2><p>Expected Guests</p></article>
+    <article class="stat-card"><h2>{{ stats.declined }}</h2><p>Declined</p></article>
+    <article class="stat-card"><h2>{{ stats.pending }}</h2><p>Pending</p></article>
+</div>
+
+<nav><ul>
+    <li><a href="/api/v1/events/{{ event.id }}/rsvps/export" role="button" class="outline">Export CSV</a></li>
+    <li><a href="/orgs/{{ org.slug }}/events/{{ event.id }}/edit">Edit Event</a></li>
+</ul></nav>
+
+{% if rsvps %}
+<table>
+    <thead><tr><th>Name</th><th>RSVP By</th><th>Status</th><th>Food</th><th>Dietary</th><th>Alcohol</th><th>Notes</th></tr></thead>
+    <tbody>
+        {% for rsvp in rsvps %}
+            {% for m in rsvp.members %}
+            <tr>
+                <td>{{ m.name }}</td>
+                <td>{{ rsvp.user.email }}</td>
+                <td>{% if rsvp.attending == true %}<span class="badge badge-attending">Yes</span>{% elif rsvp.attending == false %}<span class="badge badge-declined">No</span>{% else %}<span class="badge badge-pending">Pending</span>{% endif %}</td>
+                <td>{{ m.food_preference or '—' }}</td>
+                <td>{{ m.dietary_restrictions or '—' }}</td>
+                <td>{{ "Yes" if m.alcohol else "No" }}</td>
+                <td>{% if loop.first %}{{ rsvp.notes or '—' }}{% else %}—{% endif %}</td>
+            </tr>
+            {% endfor %}
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No RSVPs yet.</p>
+{% endif %}
+{% endblock %}

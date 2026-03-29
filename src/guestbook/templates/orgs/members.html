@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Members — {{ org.name }}{% endblock %}
+{% block content %}
+<p><a href="/orgs/{{ org.slug }}">&larr; {{ org.name }}</a></p>
+<h1>Members: {{ org.name }}</h1>
+
+{% if members %}
+<table>
+    <thead><tr><th>Email</th><th>Role</th><th>Joined</th><th>Actions</th></tr></thead>
+    <tbody>
+        {% for m in members %}
+        <tr>
+            <td>{{ m.user.email }}</td>
+            <td>
+                {% if user_org_role and user_org_role.value >= 4 %}
+                <form method="post" action="/orgs/{{ org.slug }}/members/{{ m.id }}/role" style="display:inline">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+                    <select name="org_role" class="auto-submit-role" style="display:inline;width:auto;margin:0;padding:0.15rem 0.5rem">
+                        <option value="1" {% if m.org_role.value == 1 %}selected{% endif %}>Viewer</option>
+                        <option value="2" {% if m.org_role.value == 2 %}selected{% endif %}>Event Creator</option>
+                        <option value="3" {% if m.org_role.value == 3 %}selected{% endif %}>Admin</option>
+                        <option value="4" {% if m.org_role.value == 4 %}selected{% endif %}>Owner</option>
+                    </select>
+                </form>
+                {% else %}
+                    {{ m.org_role.name | capitalize }}
+                {% endif %}
+            </td>
+            <td>{{ m.created_at.strftime('%b %d, %Y') }}</td>
+            <td>
+                {% if m.org_role.value < 4 %}
+                <form method="post" action="/orgs/{{ org.slug }}/members/{{ m.id }}/remove" style="display:inline" class="confirm-delete-form" data-email="{{ m.user.email }}">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+                    <button type="submit" class="outline secondary" style="margin:0;padding:0.15rem 0.5rem;font-size:0.85rem">Remove</button>
+                </form>
+                {% else %}
+                    Owner
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+<h3>Add Member</h3>
+<form method="post" action="/orgs/{{ org.slug }}/members/add">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+    <div class="grid">
+        <input type="email" name="email" placeholder="user@example.com" required>
+        <select name="org_role">
+            <option value="1">Viewer</option>
+            <option value="2">Event Creator</option>
+            <option value="3">Admin</option>
+        </select>
+        <button type="submit">Add Member</button>
+    </div>
+</form>
+{% endblock %}

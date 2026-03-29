@@ -1,15 +1,15 @@
-# Stage 1: Install dependencies
-FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS builder
+# Single-stage build using UV image
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
 WORKDIR /app
 
-# Copy dependency files
+# Copy dependency files first for layer caching
 COPY pyproject.toml uv.lock ./
 
 # Install dependencies (no dev extras)
 RUN uv sync --frozen --no-dev --no-install-project
 
-# Copy source
+# Copy source and config
 COPY alembic.ini ./
 COPY alembic/ ./alembic/
 COPY src/ ./src/
@@ -17,18 +17,10 @@ COPY src/ ./src/
 # Install the project itself
 RUN uv sync --frozen --no-dev
 
-# Stage 2: Runtime
-FROM python:3.12-slim-bookworm AS runtime
-
-RUN useradd --create-home --shell /bin/bash guestbook
-
-WORKDIR /app
-
-# Copy the virtual environment and source from builder
-COPY --from=builder /app /app
-
-# Ensure data directory exists for SQLite
-RUN mkdir -p /app/data && chown -R guestbook:guestbook /app/data
+# Create non-root user and data directory
+RUN useradd --create-home --shell /bin/bash guestbook \
+    && mkdir -p /app/data \
+    && chown -R guestbook:guestbook /app /app/data
 
 USER guestbook
 
@@ -36,7 +28,9 @@ EXPOSE 8000
 
 # Default environment variables
 ENV GUESTBOOK_DATABASE_URL="sqlite+aiosqlite:///./data/guestbook.db" \
-    GUESTBOOK_BASE_URL="http://localhost:8000"
+    GUESTBOOK_BASE_URL="http://localhost:8000" \
+    GUESTBOOK_HOST="0.0.0.0" \
+    GUESTBOOK_PORT="8000"
 
-ENTRYPOINT ["uv", "run", "guestbook"]
-CMD ["run", "--host", "0.0.0.0", "--port", "8000"]
+# Run migrations then start the server
+CMD ["sh", "-c", "uv run guestbook init-db && uv run guestbook run"]

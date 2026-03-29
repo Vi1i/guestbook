@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Join Household — Guestbook{% endblock %}
+{% block content %}
+<article>
+    <header><h1>Join Household</h1></header>
+    <p>You're about to join <strong>{{ household.name }}</strong>.</p>
+    <form method="post">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+        <button type="submit">Join {{ household.name }}</button>
+    </form>
+</article>
+{% endblock %}

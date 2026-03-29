@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Dev Login — Guestbook{% endblock %}
+
+{% block content %}
+<article style="background:var(--pico-del-color);padding:0.5rem 1rem;margin-bottom:1rem">
+    <p><strong>Development Mode</strong> — This page is only available when GUESTBOOK_DEVELOPMENT=true</p>
+</article>
+
+<h1>Dev Login</h1>
+<p>Click any user to instantly log in as them. Admins can also impersonate users.</p>
+
+<h2>Quick Create User</h2>
+<form method="post" action="/dev/create-user">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+    <div class="grid">
+        <input type="email" name="email" placeholder="new@example.com" required>
+        <select name="site_role">
+            <option value="1">User</option>
+            <option value="2">Support</option>
+            <option value="3">Admin</option>
+        </select>
+        <button type="submit">Create &amp; Add</button>
+    </div>
+</form>
+
+<hr>
+<h2>Users</h2>
+
+{% if users %}
+<table>
+    <thead>
+        <tr>
+            <th>Email</th>
+            <th>Display Name</th>
+            <th>Site Role</th>
+            <th>Orgs</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for u in users %}
+        <tr {% if user and user.id == u.id %}style="background:var(--pico-primary-background);color:var(--pico-primary-inverse)"{% endif %}>
+            <td>{{ u.email }}</td>
+            <td>{{ u.display_name or '—' }}</td>
+            <td>
+                {% if u.site_role.value == 3 %}<span class="badge badge-admin">Admin</span>
+                {% elif u.site_role.value == 2 %}<span class="badge badge-manager">Support</span>
+                {% else %}<span class="badge badge-guest">User</span>{% endif %}
+            </td>
+            <td>
+                {% for m in user_orgs.get(u.id | string, []) %}
+                    {{ m.organization.name }} ({{ m.org_role.name }}){% if not loop.last %}, {% endif %}
+                {% endfor %}
+                {% if not user_orgs.get(u.id | string, []) %}—{% endif %}
+            </td>
+            <td>
+                <form method="post" action="/dev/login/{{ u.id }}" style="display:inline">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+                    <button type="submit" style="margin:0;padding:0.15rem 0.5rem;font-size:0.85rem">
+                        {% if user and user.id == u.id %}Current{% else %}Log In{% endif %}
+                    </button>
+                </form>
+                {% if user and user.site_role.value >= 3 and user.id != u.id %}
+                <form method="post" action="/dev/impersonate/{{ u.id }}" style="display:inline">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+                    <button type="submit" class="outline secondary" style="margin:0;padding:0.15rem 0.5rem;font-size:0.85rem">Impersonate</button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No users yet. Create one above or use <code>guestbook create-admin --email you@example.com</code></p>
+{% endif %}
+
+<hr>
+<h2>Test SMTP</h2>
+<p><small>Send a real email through your SMTP config to verify it works. This bypasses the dev console override.</small></p>
+<form method="post" action="/dev/test-email">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+    <div class="grid">
+        <input type="email" name="email" placeholder="your-real@email.com" required>
+        <button type="submit" class="outline">Send Test Email</button>
+    </div>
+</form>
+
+<hr>
+<h2>Recent Emails</h2>
+<p><small>Emails are captured in memory instead of sent when GUESTBOOK_DEVELOPMENT=true. Magic links are clickable.</small></p>
+
+{% if recent_emails %}
+<table>
+    <thead>
+        <tr>
+            <th>Time</th>
+            <th>To</th>
+            <th>Subject</th>
+            <th>Link</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for e in recent_emails %}
+        <tr>
+            <td><small>{{ e.timestamp }}</small></td>
+            <td>{{ e.to }}</td>
+            <td>{{ e.subject }}</td>
+            <td>
+                {% if e.url %}
+                    <a href="{{ e.url }}" style="font-size:0.85rem">Open Link</a>
+                {% else %}
+                    —
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No emails sent yet. Try requesting a magic link.</p>
+{% endif %}
+{% endblock %}

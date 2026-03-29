@@ -1,45 +1,28 @@
 {% extends "base.html" %}
-
-{% block title %}Users — Admin{% endblock %}
-
+{% block title %}Users — Site Admin{% endblock %}
 {% block content %}
 <h1>User Management</h1>
 
 {% if users %}
 <table>
-    <thead>
-        <tr>
-            <th>Email</th>
-            <th>Display Name</th>
-            <th>Role</th>
-            <th>Joined</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
+    <thead><tr><th>Email</th><th>Display Name</th><th>Site Role</th><th>Joined</th><th>Actions</th></tr></thead>
     <tbody>
         {% for u in users %}
         <tr>
             <td>{{ u.email }}</td>
             <td>{{ u.display_name or '—' }}</td>
             <td>
-                {% if u.role.value == 3 %}
-                    <span class="badge badge-admin">Admin</span>
-                {% elif u.role.value == 2 %}
-                    <span class="badge badge-manager">Manager</span>
-                {% else %}
-                    <span class="badge badge-guest">Guest</span>
-                {% endif %}
+                <form method="post" action="/admin/users/{{ u.id }}/role" style="display:inline">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+                    <select name="site_role" class="auto-submit-role" style="display:inline;width:auto;margin:0;padding:0.15rem 0.5rem">
+                        <option value="1" {% if u.site_role.value == 1 %}selected{% endif %}>User</option>
+                        <option value="2" {% if u.site_role.value == 2 %}selected{% endif %}>Support</option>
+                        <option value="3" {% if u.site_role.value == 3 %}selected{% endif %}>Admin</option>
+                    </select>
+                </form>
             </td>
             <td>{{ u.created_at.strftime('%b %d, %Y') }}</td>
             <td>
-                <form method="post" action="/admin/users/{{ u.id }}/role" style="display:inline">
-                    <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
-                    <select name="role" class="auto-submit-role" style="display:inline;width:auto;margin:0;padding:0.15rem 0.5rem">
-                        <option value="1" {% if u.role.value == 1 %}selected{% endif %}>Guest</option>
-                        <option value="2" {% if u.role.value == 2 %}selected{% endif %}>Manager</option>
-                        <option value="3" {% if u.role.value == 3 %}selected{% endif %}>Admin</option>
-                    </select>
-                </form>
                 <form method="post" action="/admin/users/{{ u.id }}/delete" style="display:inline"
                       class="confirm-delete-form" data-email="{{ u.email }}">
                     <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
@@ -51,6 +34,6 @@
     </tbody>
 </table>
 {% else %}
-    <p>No users found.</p>
+<p>No users found.</p>
 {% endif %}
 {% endblock %}

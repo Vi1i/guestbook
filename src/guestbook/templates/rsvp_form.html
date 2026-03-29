@@ -1,7 +1,5 @@
 {% extends "base.html" %}
-
 {% block title %}RSVP — {{ event.title }}{% endblock %}
-
 {% block content %}
 <h1>RSVP: {{ event.title }}</h1>
 <p>{{ event.date.strftime('%B %d, %Y at %I:%M %p') }}{% if event.location %} &mdash; {{ event.location }}{% endif %}</p>
@@ -11,13 +9,11 @@
         <p><mark>The RSVP deadline has passed. Your response is shown below (read-only).</mark></p>
         {% if rsvp %}
             <p><strong>Attending:</strong> {{ "Yes" if rsvp.attending else ("No" if rsvp.attending == false else "Undecided") }}</p>
-            {% if rsvp.notes %}
-                <p><strong>Notes:</strong> {{ rsvp.notes }}</p>
-            {% endif %}
+            {% if rsvp.notes %}<p><strong>Notes:</strong> {{ rsvp.notes }}</p>{% endif %}
             {% if rsvp.members %}
                 <h3>Your Group</h3>
                 {% for member in rsvp.members %}
-                <p>{{ member.name }}{% if member.food_preference %} ({{ member.food_preference }}){% endif %}{% if member.dietary_restrictions %} — {{ member.dietary_restrictions }}{% endif %}{% if member.alcohol %} — Alcohol: Yes{% endif %}</p>
+                <p>{{ member.name }}{% if member.food_preference %} ({{ member.food_preference }}){% endif %}{% if member.dietary_restrictions %} — {{ member.dietary_restrictions }}{% endif %}{% if member.alcohol %} — Alcohol{% endif %}</p>
                 {% endfor %}
             {% endif %}
         {% else %}
@@ -27,6 +23,7 @@
 {% else %}
     <form method="post" action="/e/{{ event.invite_code }}/rsvp" id="rsvp-form">
         <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+
         <fieldset>
             <legend>Will you attend?</legend>
             <label>
@@ -39,59 +36,78 @@
             </label>
         </fieldset>
 
-        <label for="notes">Notes (optional)</label>
-        <textarea id="notes" name="notes" placeholder="Any comments or questions...">{{ rsvp.notes if rsvp and rsvp.notes else '' }}</textarea>
+        <fieldset>
+            <legend>Who's coming?</legend>
+            <p><small>Check everyone who will attend. Preferences come from your <a href="/profile">profile</a>.</small></p>
+
+            <article style="padding:0.75rem;margin-bottom:0.5rem">
+                <label style="margin:0">
+                    <input type="checkbox" name="attending_self" value="1"
+                        {% if not rsvp or self_checked %}checked{% endif %}>
+                    <strong>{{ user.display_name or user.email }}</strong> (you)
+                </label>
+                <small>
+                    {% if user.food_preference %}{{ user.food_preference }}{% endif %}
+                    {% if user.dietary_restrictions %} — {{ user.dietary_restrictions }}{% endif %}
+                    {% if user.alcohol %} — Alcohol{% endif %}
+                    {% if not user.food_preference and not user.dietary_restrictions and not user.alcohol %}
+                        No preferences set — <a href="/profile">edit profile</a>
+                    {% endif %}
+                </small>
+            </article>
+
+            {% for hm in household_members %}
+            {% set hm_name = hm._live_name or hm.name %}
+            {% set hm_food = hm._live_food if hm._live_name else hm.food_preference %}
+            {% set hm_dietary = hm._live_dietary if hm._live_name else hm.dietary_restrictions %}
+            {% set hm_alcohol = hm._live_alcohol if hm._live_name else hm.alcohol %}
+            <article style="padding:0.75rem;margin-bottom:0.5rem">
+                <label style="margin:0">
+                    <input type="checkbox" name="attending_household_{{ hm.id }}" value="1"
+                        {% if not rsvp or hm.id | string in checked_household_ids %}checked{% endif %}>
+                    <strong>{{ hm_name }}</strong>
+                    {% if hm.user_id %}<small>(linked)</small>{% endif %}
+                </label>
+                <small>
+                    {% if hm_food %}{{ hm_food }}{% endif %}
+                    {% if hm_dietary %} — {{ hm_dietary }}{% endif %}
+                    {% if hm_alcohol %} — Alcohol{% endif %}
+                </small>
+            </article>
+            {% endfor %}
+        </fieldset>
 
         <fieldset>
-            <legend>Group Members</legend>
-            <p><small>Add yourself and any guests you're bringing.</small></p>
+            <legend>Extra Guests (optional)</legend>
+            <p><small>Anyone not in your household.</small></p>
             <div id="members-container">
-                {% if rsvp and rsvp.members %}
-                    {% for member in rsvp.members %}
-                    <div class="member-row" data-index="{{ loop.index0 }}">
-                        <div class="grid">
-                            <input type="text" name="member_name[]" placeholder="Name" value="{{ member.name }}" required>
-                            <select name="member_food_preference[]">
-                                <option value="">Food preference...</option>
-                                <option value="omnivore" {% if member.food_preference == 'omnivore' %}selected{% endif %}>Omnivore</option>
-                                <option value="vegetarian" {% if member.food_preference == 'vegetarian' %}selected{% endif %}>Vegetarian</option>
-                                <option value="vegan" {% if member.food_preference == 'vegan' %}selected{% endif %}>Vegan</option>
-                            </select>
-                        </div>
-                        <div class="grid">
-                            <input type="text" name="member_dietary_restrictions[]" placeholder="Dietary restrictions (e.g. nut allergy)" value="{{ member.dietary_restrictions or '' }}">
-                            <label style="margin:0;white-space:nowrap">
-                                <input type="checkbox" name="member_alcohol_{{ loop.index0 }}" value="1" {% if member.alcohol %}checked{% endif %} style="margin-right:0.25rem">
-                                Alcohol
-                            </label>
-                            <button type="button" class="outline secondary remove-member-btn">Remove</button>
-                        </div>
+                {% for member in extra_members %}
+                <div class="member-row" data-index="{{ loop.index0 }}">
+                    <div class="grid">
+                        <input type="text" name="extra_name[]" placeholder="Name" value="{{ member.name }}" required>
+                        <select name="extra_food_preference[]">
+                            <option value="">Food preference...</option>
+                            <option value="omnivore" {% if member.food_preference == 'omnivore' %}selected{% endif %}>Omnivore</option>
+                            <option value="vegetarian" {% if member.food_preference == 'vegetarian' %}selected{% endif %}>Vegetarian</option>
+                            <option value="vegan" {% if member.food_preference == 'vegan' %}selected{% endif %}>Vegan</option>
+                        </select>
                     </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="member-row" data-index="0">
-                        <div class="grid">
-                            <input type="text" name="member_name[]" placeholder="Name" value="{{ user.display_name or '' }}" required>
-                            <select name="member_food_preference[]">
-                                <option value="">Food preference...</option>
-                                <option value="omnivore">Omnivore</option>
-                                <option value="vegetarian">Vegetarian</option>
-                                <option value="vegan">Vegan</option>
-                            </select>
-                        </div>
-                        <div class="grid">
-                            <input type="text" name="member_dietary_restrictions[]" placeholder="Dietary restrictions (e.g. nut allergy)" value="">
-                            <label style="margin:0;white-space:nowrap">
-                                <input type="checkbox" name="member_alcohol_0" value="1" style="margin-right:0.25rem">
-                                Alcohol
-                            </label>
-                            <button type="button" class="outline secondary remove-member-btn">Remove</button>
-                        </div>
+                    <div class="grid">
+                        <input type="text" name="extra_dietary_restrictions[]" placeholder="Dietary restrictions" value="{{ member.dietary_restrictions or '' }}">
+                        <label style="margin:0;white-space:nowrap">
+                            <input type="checkbox" name="extra_alcohol_{{ loop.index0 }}" value="1" {% if member.alcohol %}checked{% endif %} style="margin-right:0.25rem">
+                            Alcohol
+                        </label>
+                        <button type="button" class="outline secondary remove-member-btn">Remove</button>
                     </div>
-                {% endif %}
+                </div>
+                {% endfor %}
             </div>
-            <button type="button" class="outline" id="add-member-btn">+ Add Guest</button>
+            <button type="button" class="outline" id="add-member-btn">+ Add Extra Guest</button>
         </fieldset>
+
+        <label for="notes">Notes (optional)</label>
+        <textarea id="notes" name="notes" placeholder="Any comments or questions...">{{ rsvp.notes if rsvp and rsvp.notes else '' }}</textarea>
 
         <button type="submit">Submit RSVP</button>
     </form>

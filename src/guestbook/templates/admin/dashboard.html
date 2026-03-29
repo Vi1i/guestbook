@@ -1,76 +1,58 @@
 {% extends "base.html" %}
-
-{% block title %}Admin Dashboard — Guestbook{% endblock %}
-
+{% block title %}Site Admin — Guestbook{% endblock %}
 {% block content %}
-<h1>Admin Dashboard</h1>
+<h1>Site Administration</h1>
 
 <div class="grid">
     <article class="stat-card">
-        <h2>{{ stats.total_events }}</h2>
-        <p>Active Events</p>
+        <h2>{{ user_count }}</h2>
+        <p>Total Users</p>
     </article>
     <article class="stat-card">
-        <h2>{{ stats.total_rsvps }}</h2>
-        <p>RSVPs Received</p>
-    </article>
-    <article class="stat-card">
-        <h2>{{ stats.headcount }}</h2>
-        <p>Expected Guests</p>
-    </article>
-    <article class="stat-card">
-        <h2>{{ stats.declined }}</h2>
-        <p>Declined</p>
+        <h2>{{ orgs | length }}</h2>
+        <p>Organizations</p>
     </article>
 </div>
 
-<h2>Events</h2>
-<nav>
-    <ul>
-        <li><a href="/admin/events" role="button" class="outline">Manage Events</a></li>
-        {% if user.role.value >= 3 %}
-        <li><a href="/admin/events/new" role="button">Create Event</a></li>
-        <li><a href="/admin/users" role="button" class="outline">Manage Users</a></li>
-        {% endif %}
-    </ul>
-</nav>
+<nav><ul>
+    {% if user.site_role.value >= 3 %}
+    <li><a href="/admin/users" role="button" class="outline">Manage Users</a></li>
+    {% endif %}
+</ul></nav>
 
-{% if events %}
+<h2>Organizations</h2>
+{% if orgs %}
 <table>
-    <thead>
-        <tr>
-            <th>Event</th>
-            <th>Date</th>
-            <th>Invite Code</th>
-            <th>Yes</th>
-            <th>Guests</th>
-            <th>No</th>
-            <th>Pending</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
+    <thead><tr><th>Name</th><th>Slug</th><th>Created</th></tr></thead>
     <tbody>
-        {% for e in events %}
-        <tr class="{{ 'badge-archived' if e.archived_at else '' }}">
-            <td>
-                {{ e.title }}
-                {% if e.archived_at %}<span class="badge badge-pending">archived</span>{% endif %}
-            </td>
-            <td>{{ e.date.strftime('%b %d, %Y') }}</td>
-            <td><code>{{ e.invite_code }}</code></td>
-            <td>{{ e._attending_count }}</td>
-            <td>{{ e._attending_guests }}</td>
-            <td>{{ e._declined_count }}</td>
-            <td>{{ e._pending_count }}</td>
-            <td>
-                <a href="/admin/events/{{ e.id }}/guests">Guests</a> |
-                <a href="/admin/events/{{ e.id }}/edit">Edit</a>
-            </td>
+        {% for org in orgs %}
+        <tr>
+            <td><a href="/orgs/{{ org.slug }}">{{ org.name }}</a></td>
+            <td><code>{{ org.slug }}</code></td>
+            <td>{{ org.created_at.strftime('%b %d, %Y') }}</td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
 {% else %}
-    <p>No events yet. Create one to get started!</p>
+<p>No organizations yet.</p>
 {% endif %}
+
+<h2>Recent Users</h2>
+<table>
+    <thead><tr><th>Email</th><th>Site Role</th><th>Joined</th></tr></thead>
+    <tbody>
+        {% for u in recent_users %}
+        <tr>
+            <td>{{ u.email }}</td>
+            <td>
+                {% if u.site_role.value == 3 %}<span class="badge badge-admin">Admin</span>
+                {% elif u.site_role.value == 2 %}<span class="badge badge-manager">Support</span>
+                {% else %}<span class="badge badge-guest">User</span>{% endif %}
+            </td>
+            <td>{{ u.created_at.strftime('%b %d, %Y') }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 {% endblock %}

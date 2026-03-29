@@ -23,7 +23,7 @@
                 </p>
             {% endif %}
             {% if event.description %}
-                <p>{{ event.description | truncate(150) }}</p>
+                <p>{{ event.description | plain_preview(150) }}</p>
             {% endif %}
             <footer>
                 <a href="/e/{{ event.invite_code }}" role="button">View Details</a>

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Guestbook{% endblock %}</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css?v=4">
 </head>
 <body>
     <nav class="container-fluid">
@@ -14,9 +14,12 @@
         </ul>
         <ul>
             {% if user %}
-                <li>{{ user.email }}</li>
-                {% if user.role.value >= 2 %}
-                    <li><a href="/admin">Admin</a></li>
+                <li><a href="/profile">{{ user.display_name or user.email }}</a></li>
+                <li><a href="/orgs">My Orgs</a></li>
+                {% if has_management_access %}
+                    {% if user.site_role.value >= 2 %}
+                        <li><a href="/admin">Site Admin</a></li>
+                    {% endif %}
                 {% endif %}
                 <li>
                     <form method="post" action="/logout" style="margin:0">
@@ -27,8 +30,21 @@
             {% else %}
                 <li><a href="/login">Log In</a></li>
             {% endif %}
+            {% if dev_mode %}
+                <li><a href="/dev/login" style="color:var(--pico-del-color)">Dev</a></li>
+            {% endif %}
         </ul>
     </nav>
+
+    {% if is_impersonating %}
+    <div class="container" style="background:var(--pico-del-color);padding:0.5rem 1rem;margin-bottom:0;text-align:center">
+        <strong>Impersonating {{ user.email if user else 'unknown' }}</strong> —
+        <form method="post" action="/dev/stop-impersonating" style="display:inline;margin:0">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+            <button type="submit" style="margin:0;padding:0.15rem 0.75rem;font-size:0.85rem">Stop Impersonating</button>
+        </form>
+    </div>
+    {% endif %}
 
     <main class="container">
         {% with messages = get_flashed_messages() %}
@@ -49,6 +65,6 @@
         <p><small>Powered by Guestbook</small></p>
     </footer>
 
-    <script src="/static/js/app.js"></script>
+    <script src="/static/js/app.js?v=4"></script>
 </body>
 </html>

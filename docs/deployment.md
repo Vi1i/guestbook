@@ -211,12 +211,25 @@ SMTP failures are logged but never crash the app.
 | `GUESTBOOK_TOKEN_EXPIRY_HOURS` | `24` | Magic link validity (hours) |
 | `GUESTBOOK_RATE_LIMIT_AUTH` | `3/hour` | Rate limit on login link requests |
 
-## Roles
+## Roles & Permissions
 
-| Role | Level | Can do |
-|------|-------|--------|
-| Guest | 1 | View events, submit/edit own RSVP |
-| Manager | 2 | All guest abilities + edit events, view guest lists, archive, export CSV, generate QR |
-| Admin | 3 | All manager abilities + create/delete events, manage users and roles |
+Guestbook uses a three-layer RBAC system: **Site**, **Organization**, and **Event**.
 
-The first user should be created as admin via `guestbook create-admin`. Additional users register through invite links and start as guests. Promote them via the admin UI at `/admin/users`.
+- **Site roles** (admin, support, user) control platform-wide access
+- **Organization roles** (owner, admin, event_creator, viewer) control access within an org's events
+- **Event managers** get per-event delegation without org membership
+
+See [docs/rbac.md](rbac.md) for the full permission matrix, data model, and detailed breakdown.
+
+### Quick Start
+
+```bash
+# Create the first site admin
+guestbook create-admin --email admin@example.com
+
+# Users can then:
+# - Create organizations at /orgs/new
+# - Create events within their org
+# - Assign event managers per event
+# - Guests RSVP via invite links
+```

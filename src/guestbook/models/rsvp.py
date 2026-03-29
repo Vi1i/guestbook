@@ -34,4 +34,10 @@ class GuestGroupMember(UUIDMixin, TimestampMixin, Base):
     dietary_restrictions: Mapped[str | None] = mapped_column(Text)
     alcohol: Mapped[bool] = mapped_column(default=False)
 
+    # Track source: is this the RSVP owner, a household member, or an extra guest?
+    is_self: Mapped[bool] = mapped_column(default=False)
+    household_member_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("household_members.id", ondelete="SET NULL")
+    )
+
     rsvp: Mapped["RSVP"] = relationship(back_populates="members")

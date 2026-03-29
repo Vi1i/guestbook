@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Create Organization — Guestbook{% endblock %}
+{% block content %}
+<h1>Create Organization</h1>
+<form method="post">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+    <label for="name">Organization Name</label>
+    <input type="text" id="name" name="name" required placeholder="e.g. Smith Family Events">
+    <label for="slug">URL Slug (optional)</label>
+    <input type="text" id="slug" name="slug" placeholder="e.g. smith-family (auto-generated from name if blank)">
+    <small>This will be used in the URL: /orgs/your-slug</small>
+    <br><br>
+    <button type="submit">Create Organization</button>
+</form>
+{% endblock %}

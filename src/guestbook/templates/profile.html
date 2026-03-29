@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Your Profile — Guestbook{% endblock %}
+{% block content %}
+<h1>Your Profile</h1>
+
+<form method="post" action="/profile">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+
+    <label for="email">Email</label>
+    <input type="email" id="email" value="{{ user.email }}" disabled>
+    <small>Email cannot be changed — it's tied to your login.</small>
+
+    <label for="display_name">Display Name</label>
+    <input type="text" id="display_name" name="display_name" placeholder="How you'd like to be called"
+        value="{{ user.display_name or '' }}">
+
+    <hr>
+    <h3>Your Preferences</h3>
+    <div class="grid">
+        <div>
+            <label for="food_preference">Food Preference</label>
+            <select id="food_preference" name="food_preference">
+                <option value="">None</option>
+                <option value="omnivore" {% if user.food_preference == 'omnivore' %}selected{% endif %}>Omnivore</option>
+                <option value="vegetarian" {% if user.food_preference == 'vegetarian' %}selected{% endif %}>Vegetarian</option>
+                <option value="vegan" {% if user.food_preference == 'vegan' %}selected{% endif %}>Vegan</option>
+            </select>
+        </div>
+        <div>
+            <label for="dietary_restrictions">Dietary Restrictions</label>
+            <input type="text" id="dietary_restrictions" name="dietary_restrictions"
+                placeholder="e.g. nut allergy, gluten-free"
+                value="{{ user.dietary_restrictions or '' }}">
+        </div>
+    </div>
+    <label>
+        <input type="checkbox" name="alcohol" value="1" {% if user.alcohol %}checked{% endif %}>
+        Will drink alcohol
+    </label>
+
+    <button type="submit">Save Profile</button>
+</form>
+
+<hr>
+<h2>Household</h2>
+
+{% if household %}
+    <p><strong>{{ household.name }}</strong></p>
+    <p>Invite code: <code>{{ household.invite_code }}</code>
+        <small>— share this with family members so they can join</small></p>
+
+    {% if household_members %}
+    <table>
+        <thead><tr><th>Name</th><th>Food</th><th>Dietary</th><th>Alcohol</th><th>Linked</th><th>Action</th></tr></thead>
+        <tbody>
+            {% for m in household_members %}
+            <tr>
+                <td>{{ m._live_name or m.name }}</td>
+                <td>{{ (m._live_food if m._live_name else m.food_preference) or '—' }}</td>
+                <td>{{ (m._live_dietary if m._live_name else m.dietary_restrictions) or '—' }}</td>
+                <td>{{ "Yes" if (m._live_alcohol if m._live_name else m.alcohol) else "No" }}</td>
+                <td>{{ "Yes" if m.user_id else "No" }}</td>
+                <td>
+                    {% if m.user_id != user.id %}
+                    <form method="post" action="/household/members/{{ m.id }}/remove" style="display:inline">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+                        <button type="submit" class="outline secondary" style="margin:0;padding:0.15rem 0.5rem;font-size:0.85rem">Remove</button>
+                    </form>
+                    {% else %}
+                        <small>(you)</small>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    <h3>Add Household Member</h3>
+    <form method="post" action="/household/members/add">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+        <div class="grid">
+            <input type="text" name="name" placeholder="Name" required>
+            <select name="food_preference">
+                <option value="">Food preference...</option>
+                <option value="omnivore">Omnivore</option>
+                <option value="vegetarian">Vegetarian</option>
+                <option value="vegan">Vegan</option>
+            </select>
+        </div>
+        <div class="grid">
+            <input type="text" name="dietary_restrictions" placeholder="Dietary restrictions">
+            <label style="margin:0;white-space:nowrap">
+                <input type="checkbox" name="alcohol" value="1" style="margin-right:0.25rem"> Alcohol
+            </label>
+            <button type="submit">Add Member</button>
+        </div>
+    </form>
+
+{% else %}
+    <p>You're not part of a household yet.</p>
+    <div class="grid">
+        <div>
+            <h3>Create One</h3>
+            <form method="post" action="/household/create">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+                <input type="text" name="name" placeholder="e.g. The Smiths" required>
+                <button type="submit">Create Household</button>
+            </form>
+        </div>
+        <div>
+            <h3>Join One</h3>
+            <p>Got an invite code? Enter it to join an existing household.</p>
+            <form method="get" action="" id="join-household-form">
+                <input type="text" id="household-code" placeholder="Invite code">
+                <button type="button" id="join-household-btn" class="outline">Join Household</button>
+            </form>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

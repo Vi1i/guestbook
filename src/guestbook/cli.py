@@ -31,25 +31,25 @@ def init_db() -> None:
 def create_admin(
     email: str = typer.Option(..., help="Admin email address"),
 ) -> None:
-    """Create an admin user."""
+    """Create a site admin user."""
     from sqlalchemy import select
 
     from guestbook.database import async_session
-    from guestbook.models.user import Role, User
+    from guestbook.models.user import SiteRole, User
 
     async def _create() -> None:
         async with async_session() as db:
             result = await db.execute(select(User).where(User.email == email))
             user = result.scalar_one_or_none()
             if user is not None:
-                user.role = Role.admin
+                user.site_role = SiteRole.admin
                 await db.commit()
-                typer.echo(f"Existing user {email} promoted to admin.")
+                typer.echo(f"Existing user {email} promoted to site admin.")
             else:
-                user = User(email=email, role=Role.admin)
+                user = User(email=email, site_role=SiteRole.admin)
                 db.add(user)
                 await db.commit()
-                typer.echo(f"Admin user created: {email}")
+                typer.echo(f"Site admin user created: {email}")
 
     asyncio.run(_create())
 
@@ -58,14 +58,19 @@ def create_admin(
 def create_event(
     title: str = typer.Option(..., help="Event title"),
     date: str = typer.Option(..., help="Event date (ISO format, e.g. 2026-07-04)"),
+    org_slug: str = typer.Option(..., help="Organization slug"),
     location: str = typer.Option("", help="Event location"),
     description: str = typer.Option("", help="Event description"),
+    visibility: str = typer.Option("private", help="Visibility: public or private"),
 ) -> None:
-    """Create a new event and print its invite code."""
+    """Create a new event within an organization."""
     from datetime import datetime, timezone
 
+    from sqlalchemy import select
+
     from guestbook.database import async_session
-    from guestbook.models.event import Event
+    from guestbook.models.event import Event, EventVisibility
+    from guestbook.models.organization import Organization
 
     parsed_date = datetime.fromisoformat(date)
     if parsed_date.tzinfo is None:
@@ -73,11 +78,21 @@ def create_event(
 
     async def _create() -> None:
         async with async_session() as db:
+            result = await db.execute(
+                select(Organization).where(Organization.slug == org_slug)
+            )
+            org = result.scalar_one_or_none()
+            if org is None:
+                typer.echo(f"Error: Organization '{org_slug}' not found.", err=True)
+                raise typer.Exit(code=1)
+
             event = Event(
+                org_id=org.id,
                 title=title,
                 date=parsed_date,
                 location=location,
                 description=description,
+                visibility=EventVisibility(visibility),
             )
             db.add(event)
             await db.commit()
@@ -85,6 +100,61 @@ def create_event(
             typer.echo(f"Event created: {event.title}")
             typer.echo(f"Invite code: {event.invite_code}")
             typer.echo(f"Event ID: {event.id}")
+
+    asyncio.run(_create())
+
+
+@app.command()
+def create_org(
+    name: str = typer.Option(..., help="Organization name"),
+    slug: str = typer.Option("", help="URL slug (auto-generated if blank)"),
+    owner_email: str = typer.Option(..., help="Owner's email address"),
+) -> None:
+    """Create an organization and assign an owner."""
+    import re
+
+    from sqlalchemy import select
+
+    from guestbook.database import async_session
+    from guestbook.models.organization import OrgMembership, OrgRole, Organization
+    from guestbook.models.user import User
+
+    final_slug = slug.strip() if slug.strip() else name
+    final_slug = re.sub(r"[^\w\s-]", "", final_slug.lower())
+    final_slug = re.sub(r"[\s_]+", "-", final_slug).strip("-")[:255] or "org"
+
+    async def _create() -> None:
+        async with async_session() as db:
+            # Check slug
+            result = await db.execute(
+                select(Organization).where(Organization.slug == final_slug)
+            )
+            if result.scalar_one_or_none():
+                typer.echo(f"Error: Slug '{final_slug}' already exists.", err=True)
+                raise typer.Exit(code=1)
+
+            # Find owner
+            result = await db.execute(select(User).where(User.email == owner_email))
+            user = result.scalar_one_or_none()
+            if user is None:
+                typer.echo(f"Error: User '{owner_email}' not found.", err=True)
+                raise typer.Exit(code=1)
+
+            org = Organization(name=name, slug=final_slug)
+            db.add(org)
+            await db.flush()
+
+            membership = OrgMembership(
+                user_id=user.id,
+                org_id=org.id,
+                org_role=OrgRole.owner,
+            )
+            db.add(membership)
+            await db.commit()
+
+            typer.echo(f"Organization created: {org.name}")
+            typer.echo(f"Slug: {org.slug}")
+            typer.echo(f"Owner: {owner_email}")
 
     asyncio.run(_create())
 

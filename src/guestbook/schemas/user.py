@@ -10,7 +10,11 @@ class UserResponse(BaseModel):
     id: UUID
     email: str
     display_name: str | None
-    role: int
+    site_role: int
+    food_preference: str | None
+    dietary_restrictions: str | None
+    alcohol: bool
+    household_id: UUID | None
     created_at: datetime
     updated_at: datetime
 
@@ -18,8 +22,8 @@ class UserResponse(BaseModel):
 class UserCreate(BaseModel):
     email: EmailStr
     display_name: str | None = None
-    role: int = 1  # guest
+    site_role: int = 1  # user
 
 
-class RoleUpdate(BaseModel):
-    role: int
+class SiteRoleUpdate(BaseModel):
+    site_role: int

@@ -9,6 +9,8 @@ class GuestGroupMemberSchema(BaseModel):
     food_preference: str | None = None
     dietary_restrictions: str | None = None
     alcohol: bool = False
+    is_self: bool = False
+    household_member_id: UUID | None = None
 
 
 class GuestGroupMemberResponse(GuestGroupMemberSchema):

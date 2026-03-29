@@ -1,5 +1,4 @@
 import logging
-import secrets
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -14,6 +13,7 @@ from guestbook.admin_pages import router as admin_router
 from guestbook.api.router import api_router
 from guestbook.config import settings
 from guestbook.middleware import SecurityHeadersMiddleware
+from guestbook.org_pages import router as org_router
 from guestbook.pages import router as pages_router
 
 _BASE_DIR = Path(__file__).resolve().parent
@@ -41,11 +41,7 @@ def create_app() -> FastAPI:
         debug=settings.debug,
     )
 
-    # Middleware — order matters: outermost first with add_middleware (LIFO)
-    # SecurityHeaders wraps everything
     app.add_middleware(SecurityHeadersMiddleware)
-
-    # Session middleware
     app.add_middleware(
         SessionMiddleware,
         secret_key=settings.secret_key,
@@ -54,54 +50,36 @@ def create_app() -> FastAPI:
         https_only=not settings.debug,
     )
 
-    # Rate limiter state
     app.state.limiter = limiter
-
-    # --- Error handlers ---
 
     @app.exception_handler(404)
     async def not_found_handler(request: Request, exc):
-        return _templates.TemplateResponse(
-            "errors/404.html",
-            _error_context(request),
-            status_code=404,
-        )
+        return _templates.TemplateResponse("errors/404.html", _error_context(request), status_code=404)
 
     @app.exception_handler(403)
     async def forbidden_handler(request: Request, exc):
-        return _templates.TemplateResponse(
-            "errors/403.html",
-            _error_context(request),
-            status_code=403,
-        )
+        return _templates.TemplateResponse("errors/403.html", _error_context(request), status_code=403)
 
     @app.exception_handler(500)
     async def server_error_handler(request: Request, exc):
         logger.exception("Internal server error")
-        return _templates.TemplateResponse(
-            "errors/500.html",
-            _error_context(request),
-            status_code=500,
-        )
+        return _templates.TemplateResponse("errors/500.html", _error_context(request), status_code=500)
 
     @app.exception_handler(RateLimitExceeded)
     async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
-        return _templates.TemplateResponse(
-            "errors/429.html",
-            _error_context(request),
-            status_code=429,
-        )
+        return _templates.TemplateResponse("errors/429.html", _error_context(request), status_code=429)
 
-    # Static files
     app.mount("/static", StaticFiles(directory=_BASE_DIR / "static"), name="static")
 
-    # API routes
     app.include_router(api_router)
-
-    # Admin page routes
     app.include_router(admin_router)
+    app.include_router(org_router)
 
-    # Server-rendered page routes
+    # Dev routes — only in development mode
+    if settings.development:
+        from guestbook.dev_pages import router as dev_router
+        app.include_router(dev_router)
+
     app.include_router(pages_router)
 
     return app

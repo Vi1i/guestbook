@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}My Organizations — Guestbook{% endblock %}
+{% block content %}
+<h1>My Organizations</h1>
+<p><a href="/orgs/new" role="button">Create Organization</a></p>
+
+{% if orgs %}
+<div class="grid">
+    {% for org in orgs %}
+    <article>
+        <header><h3><a href="/orgs/{{ org.slug }}">{{ org.name }}</a></h3></header>
+        <p><code>/orgs/{{ org.slug }}</code></p>
+        <footer><a href="/orgs/{{ org.slug }}" role="button" class="outline">Manage</a></footer>
+    </article>
+    {% endfor %}
+</div>
+{% else %}
+<p>You're not a member of any organizations yet. Create one to start managing events.</p>
+{% endif %}
+{% endblock %}
