@@ -113,6 +113,7 @@ def _template_context(request: Request, user: User | None, **kwargs):
         "has_management_access": getattr(request.state, "has_management_access", False) if hasattr(request, "state") else False,
         "is_impersonating": bool(request.session.get("impersonating_from")),
         "dev_mode": settings.development,
+        "smtp_from": settings.smtp_from,
         **kwargs,
     }
 

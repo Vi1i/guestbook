@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Y'all RSVP — Self-hosted RSVP website builder for home labs"
 readme = "README.md"
 authors = [
-    { name = "Lawrence L. O'Boyle II", email = "vili.petal@protonmail.com" }
+    { name = "Lawrence L. O'Boyle II", email = "vili.petal@protonmail.com" },
 ]
 requires-python = ">=3.12"
 dependencies = [
