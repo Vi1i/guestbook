@@ -49,7 +49,7 @@ def send_magic_link(email: str, url: str) -> None:
         _send_console(email, url)
         _capture_email(email, "Magic Link", url)
     else:
-        subject = "Your Guestbook Login Link"
+        subject = "Your Y'all RSVP Login Link"
         html = _jinja_env.get_template("access_link.html").render(url=url)
         _send_smtp(email, subject, html)
 
@@ -85,9 +85,9 @@ def send_test_email(email: str) -> str:
     if not settings.smtp_host or not settings.smtp_user:
         return "SMTP not configured. Set GUESTBOOK_SMTP_* env vars."
 
-    html = "<h2>Guestbook Test Email</h2><p>If you're reading this, your SMTP configuration works!</p>"
+    html = "<h2>Y'all RSVP Test Email</h2><p>If you're reading this, your SMTP configuration works!</p>"
     try:
-        _send_smtp(email, "Guestbook — Test Email", html)
+        _send_smtp(email, "Y'all RSVP — Test Email", html)
         return f"Test email sent to {email} via {settings.smtp_host}"
     except Exception as e:
         return f"Failed to send: {e}"

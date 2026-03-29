@@ -1,7 +1,7 @@
 [project]
 name = "guestbook"
 version = "0.1.0"
-description = "Self-hosted RSVP website builder for home labs"
+description = "Y'all RSVP — Self-hosted RSVP website builder for home labs"
 readme = "README.md"
 authors = [
     { name = "Lawrence L. O'Boyle II", email = "vili.petal@protonmail.com" }

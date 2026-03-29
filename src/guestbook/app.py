@@ -35,7 +35,7 @@ def _error_context(request: Request):
 
 def create_app() -> FastAPI:
     app = FastAPI(
-        title="Guestbook",
+        title="Y'all RSVP",
         description="Self-hosted RSVP website builder",
         version="0.1.0",
         debug=settings.debug,

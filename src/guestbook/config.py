@@ -40,5 +40,8 @@ class Settings(BaseSettings):
     token_expiry_hours: int = 24
     rate_limit_auth: str = "3/hour"
 
+    # Auto-create admin on first boot (email address, empty = skip)
+    admin_email: str = ""
+
 
 settings = Settings()

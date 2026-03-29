@@ -12,12 +12,12 @@ app = typer.Typer(name="guestbook", help="Self-hosted RSVP website builder")
 
 @app.callback()
 def main() -> None:
-    """Guestbook — self-hosted RSVP website builder."""
+    """Y'all RSVP — self-hosted RSVP website builder."""
 
 
 @app.command()
 def init_db() -> None:
-    """Run database migrations (alembic upgrade head)."""
+    """Run database migrations and optionally create admin from GUESTBOOK_ADMIN_EMAIL."""
     result = subprocess.run(
         [sys.executable, "-m", "alembic", "upgrade", "head"],
         check=False,
@@ -25,6 +25,33 @@ def init_db() -> None:
     if result.returncode != 0:
         raise typer.Exit(code=1)
     typer.echo("Database initialized successfully.")
+
+    # Auto-create admin if GUESTBOOK_ADMIN_EMAIL is set
+    if settings.admin_email:
+        from sqlalchemy import select
+
+        from guestbook.database import async_session
+        from guestbook.models.user import SiteRole, User
+
+        async def _ensure_admin() -> None:
+            async with async_session() as db:
+                result = await db.execute(
+                    select(User).where(User.email == settings.admin_email)
+                )
+                user = result.scalar_one_or_none()
+                if user is None:
+                    user = User(email=settings.admin_email, site_role=SiteRole.admin)
+                    db.add(user)
+                    await db.commit()
+                    typer.echo(f"Admin user created: {settings.admin_email}")
+                elif user.site_role != SiteRole.admin:
+                    user.site_role = SiteRole.admin
+                    await db.commit()
+                    typer.echo(f"Existing user {settings.admin_email} promoted to admin.")
+                else:
+                    typer.echo(f"Admin user {settings.admin_email} already exists.")
+
+        asyncio.run(_ensure_admin())
 
 
 @app.command()
@@ -200,7 +227,7 @@ def run(
     port: int = typer.Option(None, help="Bind port (default: from GUESTBOOK_PORT or 8000)"),
     reload: bool = typer.Option(False, help="Enable auto-reload"),
 ) -> None:
-    """Start the Guestbook web server."""
+    """Start the Y'all RSVP web server."""
     uvicorn.run(
         "guestbook.app:create_app",
         factory=True,
