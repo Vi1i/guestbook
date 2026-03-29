@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Guestbook{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <nav class="container-fluid">
+        <ul>
+            <li><a href="/"><strong>Guestbook</strong></a></li>
+        </ul>
+        <ul>
+            {% if user %}
+                <li>{{ user.email }}</li>
+                {% if user.role.value >= 2 %}
+                    <li><a href="/admin">Admin</a></li>
+                {% endif %}
+                <li>
+                    <form method="post" action="/logout" style="margin:0">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+                        <button type="submit" class="outline secondary" style="margin:0;padding:0.25rem 0.75rem">Logout</button>
+                    </form>
+                </li>
+            {% else %}
+                <li><a href="/login">Log In</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+
+    <main class="container">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <article class="flash-{{ category }}">
+                        <p>{{ message }}</p>
+                    </article>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="container">
+        <hr>
+        <p><small>Powered by Guestbook</small></p>
+    </footer>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

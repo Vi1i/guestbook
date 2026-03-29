@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Login — Guestbook{% endblock %}
+
+{% block content %}
+<article>
+    <header>
+        <h1>Admin Login</h1>
+    </header>
+
+    <p>Enter your admin email to receive a login link.</p>
+
+    <form method="post" action="/admin/login">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+        <label for="email">Email address</label>
+        <input type="email" id="email" name="email" placeholder="admin@example.com" required>
+        <button type="submit">Send Login Link</button>
+    </form>
+
+    <footer>
+        <small>Only users with manager or admin roles can access the admin area.</small>
+    </footer>
+</article>
+{% endblock %}

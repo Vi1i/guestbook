@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}{{ "Edit" if event else "Create" }} Event — Admin{% endblock %}
+
+{% block content %}
+<h1>{{ "Edit" if event else "Create" }} Event</h1>
+
+<form method="post">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+    <label for="title">Title</label>
+    <input type="text" id="title" name="title" value="{{ event.title if event else '' }}" required>
+
+    <label for="description">Description <small>(supports Markdown — **bold**, *italic*, [links](url), lists)</small></label>
+    <textarea id="description" name="description" rows="6">{{ event.description if event else '' }}</textarea>
+
+    <div class="grid">
+        <div>
+            <label for="date">Date &amp; Time</label>
+            <input type="datetime-local" id="date" name="date"
+                value="{{ event.date.strftime('%Y-%m-%dT%H:%M') if event else '' }}" required>
+        </div>
+        <div>
+            <label for="rsvp_cutoff">RSVP Deadline (optional)</label>
+            <input type="datetime-local" id="rsvp_cutoff" name="rsvp_cutoff"
+                value="{{ event.rsvp_cutoff.strftime('%Y-%m-%dT%H:%M') if event and event.rsvp_cutoff else '' }}">
+        </div>
+    </div>
+
+    <label for="location">Location</label>
+    <input type="text" id="location" name="location" value="{{ event.location if event else '' }}">
+
+    <label for="location_url">Location URL (optional)</label>
+    <input type="url" id="location_url" name="location_url" value="{{ event.location_url if event and event.location_url else '' }}">
+
+    <hr>
+    <h3>Event Details</h3>
+    <p><small>Optional fields that appear on the event page.</small></p>
+
+    <label for="dress_code">Dress Code</label>
+    <input type="text" id="dress_code" name="dress_code" placeholder="e.g. Casual, Semi-formal, Hawaiian shirts"
+        value="{{ event.details_json.dress_code if event and event.details_json and event.details_json.dress_code else '' }}">
+
+    <label for="parking">Parking Info</label>
+    <input type="text" id="parking" name="parking" placeholder="e.g. Street parking available, use the back lot"
+        value="{{ event.details_json.parking if event and event.details_json and event.details_json.parking else '' }}">
+
+    <label for="bring">What to Bring</label>
+    <input type="text" id="bring" name="bring" placeholder="e.g. A side dish, swimsuit, lawn chairs"
+        value="{{ event.details_json.bring if event and event.details_json and event.details_json.bring else '' }}">
+
+    <fieldset>
+        <legend>Schedule (optional)</legend>
+        <p><small>Add time slots for the event. Leave empty to skip.</small></p>
+        <div id="schedule-container">
+            {% if event and event.details_json and event.details_json.schedule %}
+                {% for item in event.details_json.schedule %}
+                <div class="schedule-row grid">
+                    <input type="text" name="schedule_time[]" placeholder="Time (e.g. 5:00 PM)" value="{{ item.time }}">
+                    <input type="text" name="schedule_activity[]" placeholder="Activity (e.g. Dinner served)" value="{{ item.activity }}">
+                    <button type="button" class="outline secondary remove-schedule-btn">Remove</button>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="schedule-row grid">
+                    <input type="text" name="schedule_time[]" placeholder="Time (e.g. 5:00 PM)">
+                    <input type="text" name="schedule_activity[]" placeholder="Activity (e.g. Dinner served)">
+                    <button type="button" class="outline secondary remove-schedule-btn">Remove</button>
+                </div>
+            {% endif %}
+        </div>
+        <button type="button" class="outline" id="add-schedule-btn">+ Add Time Slot</button>
+    </fieldset>
+
+    <hr>
+
+    <label>
+        <input type="checkbox" name="notify_on_change" value="1"
+            {{ 'checked' if not event or event.notify_on_change else '' }}>
+        Notify guests on event changes
+    </label>
+
+    <button type="submit">{{ "Update" if event else "Create" }} Event</button>
+</form>
+
+{% if event %}
+<hr>
+<p>
+    <strong>Invite Code:</strong> <code>{{ event.invite_code }}</code><br>
+    <strong>Share Link:</strong> <code>{{ base_url }}/e/{{ event.invite_code }}</code>
+</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,66 @@
+/* Guestbook — minimal overrides on top of Pico CSS */
+
+.flash-success {
+    background-color: var(--pico-ins-color);
+    padding: 0.5rem 1rem;
+    border-radius: var(--pico-border-radius);
+    margin-bottom: 1rem;
+}
+
+.flash-error {
+    background-color: var(--pico-del-color);
+    padding: 0.5rem 1rem;
+    border-radius: var(--pico-border-radius);
+    margin-bottom: 1rem;
+}
+
+.flash-info {
+    background-color: var(--pico-primary-background);
+    padding: 0.5rem 1rem;
+    border-radius: var(--pico-border-radius);
+    margin-bottom: 1rem;
+}
+
+.member-row {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: var(--pico-border-radius);
+}
+
+.member-row .grid {
+    margin-bottom: 0;
+}
+
+#add-member-btn {
+    margin-top: 0.5rem;
+}
+
+/* Badge styles for admin UI */
+.badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: var(--pico-border-radius);
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.badge-admin { background: var(--pico-del-color); color: var(--pico-color); }
+.badge-manager { background: var(--pico-primary-background); color: var(--pico-primary-inverse); }
+.badge-guest { background: var(--pico-muted-border-color); color: var(--pico-color); }
+.badge-attending { background: var(--pico-ins-color); }
+.badge-declined { background: var(--pico-del-color); }
+.badge-pending { background: var(--pico-muted-border-color); }
+.badge-archived { opacity: 0.6; }
+
+/* Stat cards for admin dashboard */
+.stat-card {
+    text-align: center;
+}
+.stat-card h2 {
+    margin-bottom: 0;
+}
+.stat-card p {
+    margin-top: 0.25rem;
+    color: var(--pico-muted-color);
+}

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <h2>Event Updated: {{ event.title }}</h2>
+    <p>The details for <strong>{{ event.title }}</strong> have been updated.</p>
+
+    {% if changes %}
+    <h3>What changed:</h3>
+    <ul>
+        {% for field, (old_val, new_val) in changes.items() %}
+        <li><strong>{{ field }}:</strong> {{ old_val }} &rarr; {{ new_val }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <h3>Current Details:</h3>
+    <ul>
+        <li><strong>Date:</strong> {{ event.date.strftime('%B %d, %Y at %I:%M %p') }}</li>
+        <li><strong>Location:</strong> {{ event.location or 'TBD' }}</li>
+        {% if event.description %}
+        <li><strong>Description:</strong> {{ event.description }}</li>
+        {% endif %}
+    </ul>
+
+    <p>
+        <a href="{{ base_url }}/e/{{ event.invite_code }}" style="background: #1095c1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
+            View Event
+        </a>
+    </p>
+
+    <hr>
+    <p style="color: #666; font-size: 12px;">You received this because you RSVP'd to this event on Guestbook.</p>
+</body>
+</html>

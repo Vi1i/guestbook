@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Events — Admin{% endblock %}
+
+{% block content %}
+<h1>Events</h1>
+
+<nav>
+    <ul>
+        {% if user.role.value >= 3 %}
+        <li><a href="/admin/events/new" role="button">Create Event</a></li>
+        {% endif %}
+        <li>
+            {% if show_archived %}
+                <a href="/admin/events" role="button" class="outline">Hide Archived</a>
+            {% else %}
+                <a href="/admin/events?show_archived=1" role="button" class="outline">Show Archived</a>
+            {% endif %}
+        </li>
+    </ul>
+</nav>
+
+{% if events %}
+<table>
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Date</th>
+            <th>Invite Code</th>
+            <th>RSVPs</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for e in events %}
+        <tr>
+            <td>{{ e.title }}</td>
+            <td>{{ e.date.strftime('%b %d, %Y') }}</td>
+            <td><code>{{ e.invite_code }}</code></td>
+            <td>{{ e._rsvp_count }}</td>
+            <td>
+                {% if e.archived_at %}
+                    <span class="badge badge-pending">Archived</span>
+                {% else %}
+                    <span class="badge badge-attending">Active</span>
+                {% endif %}
+            </td>
+            <td>
+                <a href="/admin/events/{{ e.id }}/guests">Guests</a> |
+                <a href="/admin/events/{{ e.id }}/edit">Edit</a> |
+                <form method="post" action="/admin/events/{{ e.id }}/archive" style="display:inline">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+                    <button type="submit" class="outline secondary" style="margin:0;padding:0.15rem 0.5rem;font-size:0.85rem">
+                        {{ "Unarchive" if e.archived_at else "Archive" }}
+                    </button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+    <p>No events found.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}RSVP Confirmed — {{ event.title }}{% endblock %}
+
+{% block content %}
+<article>
+    <header>
+        <h1>RSVP Confirmed!</h1>
+    </header>
+
+    <p>Your RSVP for <strong>{{ event.title }}</strong> has been recorded.</p>
+
+    <p><strong>Attending:</strong> {{ "Yes" if rsvp.attending else ("No" if rsvp.attending == false else "Undecided") }}</p>
+    <p><strong>People in your group:</strong> {{ rsvp.total_guests }}</p>
+
+    {% if rsvp.members %}
+    <h3>Your Group</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Food Preference</th>
+                <th>Dietary Restrictions</th>
+                <th>Alcohol</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for member in rsvp.members %}
+            <tr>
+                <td>{{ member.name }}</td>
+                <td>{{ member.food_preference or '—' }}</td>
+                <td>{{ member.dietary_restrictions or '—' }}</td>
+                <td>{{ "Yes" if member.alcohol else "No" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    <footer>
+        <a href="/e/{{ event.invite_code }}/rsvp" role="button" class="outline">Edit RSVP</a>
+        <a href="/e/{{ event.invite_code }}">Back to Event</a>
+    </footer>
+</article>
+{% endblock %}

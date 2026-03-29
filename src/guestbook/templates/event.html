@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}{{ event.title }} — Guestbook{% endblock %}
+
+{% block content %}
+<article>
+    <header>
+        <h1>{{ event.title }}</h1>
+    </header>
+
+    <p><strong>Date:</strong> {{ event.date.strftime('%B %d, %Y at %I:%M %p') }}</p>
+
+    {% if event.location %}
+        <p><strong>Location:</strong>
+            {% if event.location_url %}
+                <a href="{{ event.location_url }}" target="_blank">{{ event.location }}</a>
+            {% else %}
+                {{ event.location }}
+            {% endif %}
+        </p>
+    {% endif %}
+
+    {% if event.description %}
+        <div class="event-description">
+            {{ event.description | markdown }}
+        </div>
+    {% endif %}
+
+    {% if event.details_json %}
+        {% if event.details_json.schedule %}
+        <h3>Schedule</h3>
+        <table>
+            <tbody>
+                {% for item in event.details_json.schedule %}
+                <tr>
+                    <td><strong>{{ item.time }}</strong></td>
+                    <td>{{ item.activity }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        {% if event.details_json.dress_code %}
+        <p><strong>Dress Code:</strong> {{ event.details_json.dress_code }}</p>
+        {% endif %}
+
+        {% if event.details_json.parking %}
+        <p><strong>Parking:</strong> {{ event.details_json.parking }}</p>
+        {% endif %}
+
+        {% if event.details_json.bring %}
+        <p><strong>What to Bring:</strong> {{ event.details_json.bring }}</p>
+        {% endif %}
+
+        {% if event.details_json.custom %}
+            {% for section in event.details_json.custom %}
+            <h3>{{ section.title }}</h3>
+            <div>{{ section.content | markdown }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endif %}
+
+    {% if event.rsvp_cutoff %}
+        <p><strong>RSVP Deadline:</strong> {{ event.rsvp_cutoff.strftime('%B %d, %Y at %I:%M %p') }}</p>
+    {% endif %}
+
+    {% if past_cutoff %}
+        <p><mark>RSVPs are now closed for this event.</mark></p>
+    {% elif user %}
+        <a href="/e/{{ event.invite_code }}/rsvp" role="button">
+            {% if existing_rsvp %}Edit Your RSVP{% else %}RSVP Now{% endif %}
+        </a>
+    {% else %}
+        <hr>
+        <h3>Register to RSVP</h3>
+        <p>Enter your email to receive a login link.</p>
+        <form method="post" action="/e/{{ event.invite_code }}/register">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
+            <label for="email">Email address</label>
+            <input type="email" id="email" name="email" placeholder="you@example.com" required>
+            <button type="submit">Send Login Link</button>
+        </form>
+    {% endif %}
+</article>
+{% endblock %}

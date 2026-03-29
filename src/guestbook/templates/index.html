@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Guestbook — Events{% endblock %}
+
+{% block content %}
+<h1>Upcoming Events</h1>
+
+{% if events %}
+    <div class="grid">
+        {% for event in events %}
+        <article>
+            <header>
+                <h3><a href="/e/{{ event.invite_code }}">{{ event.title }}</a></h3>
+            </header>
+            <p><strong>Date:</strong> {{ event.date.strftime('%B %d, %Y at %I:%M %p') }}</p>
+            {% if event.location %}
+                <p><strong>Location:</strong>
+                    {% if event.location_url %}
+                        <a href="{{ event.location_url }}" target="_blank">{{ event.location }}</a>
+                    {% else %}
+                        {{ event.location }}
+                    {% endif %}
+                </p>
+            {% endif %}
+            {% if event.description %}
+                <p>{{ event.description | truncate(150) }}</p>
+            {% endif %}
+            <footer>
+                <a href="/e/{{ event.invite_code }}" role="button">View Details</a>
+            </footer>
+        </article>
+        {% endfor %}
+    </div>
+{% else %}
+    <p>No upcoming events right now. Check back later!</p>
+{% endif %}
+{% endblock %}
